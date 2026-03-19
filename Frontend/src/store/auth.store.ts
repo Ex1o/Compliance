@@ -16,6 +16,7 @@ interface AuthState {
   isLoading: boolean;
   sendOtp: (mobile: string) => Promise<{ expiresIn: number }>;
   verifyOtp: (mobile: string, otp: string) => Promise<{ isNewUser: boolean }>;
+  skipOtp: (mobile?: string) => Promise<{ isNewUser: boolean }>;
   logout: () => Promise<void>;
   fetchMe: () => Promise<void>;
   setToken: (token: string) => void;
@@ -37,6 +38,15 @@ export const useAuthStore = create<AuthState>()(
 
       verifyOtp: async (mobile: string, otp: string) => {
         const res = await apiClient.post("/auth/otp/verify", { mobile, otp });
+        const { accessToken, isNewUser, user } = res.data;
+        localStorage.setItem("access_token", accessToken);
+        set({ accessToken, isNewUser, user, isAuthenticated: true });
+        return { isNewUser };
+      },
+
+      skipOtp: async (mobile?: string) => {
+        const payload = mobile ? { mobile } : undefined;
+        const res = await apiClient.post("/auth/dev/skip", payload);
         const { accessToken, isNewUser, user } = res.data;
         localStorage.setItem("access_token", accessToken);
         set({ accessToken, isNewUser, user, isAuthenticated: true });

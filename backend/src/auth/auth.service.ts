@@ -1,6 +1,6 @@
 import {
   Injectable, BadRequestException, UnauthorizedException,
-  Logger, NotFoundException,
+  Logger, NotFoundException, ForbiddenException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
@@ -125,6 +125,61 @@ export class AuthService {
     });
 
     // Issue tokens
+    const { accessToken, refreshToken } = await this.tokenService.issueTokenPair(user.id, user.role);
+    const isNewUser = !user.business?.profileComplete;
+
+    return {
+      accessToken,
+      refreshToken,
+      isNewUser,
+      user: { id: user.id, role: user.role },
+    };
+  }
+
+  async devSkipLogin(mobile?: string): Promise<{
+    accessToken: string;
+    refreshToken: string;
+    isNewUser: boolean;
+    user: { id: string; role: UserRole };
+  }> {
+    const nodeEnv = this.config.get<string>('NODE_ENV', 'development');
+    if (nodeEnv === 'production') {
+      throw new ForbiddenException('Dev skip login is not available in production.');
+    }
+
+    const selectedMobile = mobile ?? '9999999999';
+    if (!/^[6-9]\d{9}$/.test(selectedMobile)) {
+      throw new BadRequestException('Invalid Indian mobile number');
+    }
+
+    const mobileHash = hashField(selectedMobile);
+    const mobileEncrypted = encryptField(selectedMobile);
+
+    await this.prisma.user.upsert({
+      where: { mobileHash },
+      create: {
+        mobile: mobileEncrypted,
+        mobileHash,
+        role: 'MSME_OWNER',
+        isActive: true,
+      },
+      update: { isActive: true },
+    });
+
+    const user = await this.prisma.user.findUnique({
+      where: { mobileHash },
+      include: { business: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { lastLoginAt: new Date() },
+    });
+
     const { accessToken, refreshToken } = await this.tokenService.issueTokenPair(user.id, user.role);
     const isNewUser = !user.business?.profileComplete;
 

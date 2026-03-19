@@ -11,6 +11,7 @@ import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { SendOtpDto } from './dto/send-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
+import { DevSkipLoginDto } from './dto/dev-skip-login.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { JwtRefreshGuard } from '../common/guards/jwt-refresh.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -53,6 +54,34 @@ export class AuthController {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      path: '/api/v1/auth/refresh',
+    });
+
+    return {
+      accessToken: result.accessToken,
+      isNewUser: result.isNewUser,
+      user: result.user,
+    };
+  }
+
+  @Public()
+  @Post('dev/skip')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Development-only: login without OTP and receive JWT tokens' })
+  @ApiBody({ type: DevSkipLoginDto, required: false })
+  @ApiResponse({ status: 200, description: 'Dev login successful' })
+  @ApiResponse({ status: 403, description: 'Only available outside production' })
+  async devSkipLogin(
+    @Body() dto: DevSkipLoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.authService.devSkipLogin(dto.mobile);
+
+    res.cookie('refresh_token', result.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 60 * 60 * 1000,
       path: '/api/v1/auth/refresh',
     });
 

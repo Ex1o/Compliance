@@ -12,7 +12,7 @@ const testimonials = [
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { sendOtp, verifyOtp } = useAuthStore();
+  const { sendOtp, verifyOtp, skipOtp } = useAuthStore();
   const [step, setStep] = useState<'mobile' | 'otp'>('mobile');
   const [mobile, setMobile] = useState('');
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -76,16 +76,17 @@ const LoginPage = () => {
     }
   };
 
-  const handleSkipOtp = () => {
-    const token = 'dev-skip-token';
-    localStorage.setItem('access_token', token);
-    useAuthStore.setState({
-      accessToken: token,
-      isAuthenticated: true,
-      isNewUser: false,
-      user: { id: 'dev-user', role: 'MSME_OWNER', mobile },
-    });
-    navigate('/dashboard');
+  const handleSkipOtp = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const { isNewUser } = await skipOtp(mobile || undefined);
+      navigate(isNewUser ? '/onboarding' : '/dashboard');
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleResend = async () => {
@@ -188,12 +189,15 @@ const LoginPage = () => {
 
                 {import.meta.env.DEV && (
                   <button
-                    onClick={handleSkipOtp}
+                    onClick={() => void handleSkipOtp()}
+                    disabled={loading}
                     className="w-full mt-3 px-6 py-3.5 text-base font-body font-semibold rounded-md border border-border text-foreground hover:bg-muted transition-colors min-h-[52px]"
                   >
-                    Skip OTP (Dev)
+                    {loading ? 'Please wait...' : 'Skip OTP (Dev)'}
                   </button>
                 )}
+
+                {error && <p className="mt-3 text-sm font-body text-destructive text-center">{error}</p>}
 
                 <p className="mt-4 text-xs font-body text-muted-foreground text-center">
                   By continuing, you agree to our{' '}
