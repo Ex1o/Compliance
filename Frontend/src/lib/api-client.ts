@@ -14,6 +14,9 @@ export const apiClient: AxiosInstance = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("access_token");
+    if (import.meta.env.DEV) {
+      config.headers["X-Dev-Bypass-Auth"] = "true";
+    }
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -70,10 +73,15 @@ apiClient.interceptors.response.use(
       }
     }
 
-    const message =
+    const serverMessage =
       (error.response?.data as { message?: string[] | string } | undefined)?.message?.[0] ||
-      (error.response?.data as { message?: string[] | string } | undefined)?.message ||
-      "Something went wrong. Please try again.";
+      (error.response?.data as { message?: string[] | string } | undefined)?.message;
+
+    const message =
+      serverMessage ||
+      (error.code === 'ERR_NETWORK'
+        ? 'Cannot reach backend API. Ensure backend is running and CORS allows your frontend origin.'
+        : error.message || 'Something went wrong. Please try again.');
 
     return Promise.reject(new Error(message as string));
   },

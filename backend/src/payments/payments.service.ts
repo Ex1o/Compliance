@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
-import Razorpay from 'razorpay';
+import Razorpay = require('razorpay');
 import * as crypto from 'crypto';
 import { SubscriptionPlan } from '@prisma/client';
 

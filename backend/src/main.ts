@@ -49,10 +49,12 @@ async function bootstrap() {
 
   // ── CORS ────────────────────────────────────────────────────────────────────
   app.enableCors({
-    origin: configService.get<string>('FRONTEND_URL', 'http://localhost:3000').split(','),
+    origin: configService
+      .get<string>('FRONTEND_URL', 'http://localhost:3000,http://localhost:8080')
+      .split(','),
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID', 'X-Dev-Bypass-Auth'],
   });
 
   // ── API versioning ──────────────────────────────────────────────────────────

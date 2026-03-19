@@ -36,7 +36,7 @@ const envSchema = z.object({
   SENTRY_DSN:           z.string().optional(),
 
   // App
-  FRONTEND_URL:         z.string().default('http://localhost:3000'),
+  FRONTEND_URL:         z.string().default('http://localhost:3000,http://localhost:8080'),
   ENCRYPTION_KEY:       z.string().length(64), // 32-byte hex = 64 chars
 
   // Crypto for OTP

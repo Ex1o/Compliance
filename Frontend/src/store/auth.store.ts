@@ -33,12 +33,12 @@ export const useAuthStore = create<AuthState>()(
 
       sendOtp: async (mobile: string) => {
         const res = await apiClient.post("/auth/otp/send", { mobile });
-        return res.data;
+        return res;
       },
 
       verifyOtp: async (mobile: string, otp: string) => {
         const res = await apiClient.post("/auth/otp/verify", { mobile, otp });
-        const { accessToken, isNewUser, user } = res.data;
+        const { accessToken, isNewUser, user } = res;
         localStorage.setItem("access_token", accessToken);
         set({ accessToken, isNewUser, user, isAuthenticated: true });
         return { isNewUser };
@@ -47,7 +47,7 @@ export const useAuthStore = create<AuthState>()(
       skipOtp: async (mobile?: string) => {
         const payload = mobile ? { mobile } : undefined;
         const res = await apiClient.post("/auth/dev/skip", payload);
-        const { accessToken, isNewUser, user } = res.data;
+        const { accessToken, isNewUser, user } = res;
         localStorage.setItem("access_token", accessToken);
         set({ accessToken, isNewUser, user, isAuthenticated: true });
         return { isNewUser };
@@ -65,7 +65,7 @@ export const useAuthStore = create<AuthState>()(
 
       fetchMe: async () => {
         const res = await apiClient.get("/auth/me");
-        set({ user: res.data, isAuthenticated: true });
+        set({ user: res, isAuthenticated: true });
       },
 
       setToken: (token: string) => {
