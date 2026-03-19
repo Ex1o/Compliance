@@ -1,0 +1,291 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── ENUMS ────────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  MSME_OWNER
+  CA_PARTNER
+  ADMIN
+}
+
+enum EntityType {
+  PROPRIETOR
+  PVT_LTD
+  LLP
+  PARTNERSHIP
+}
+
+enum GstStatus {
+  REGULAR
+  COMPOSITION
+  NOT_REGISTERED
+  PENDING
+}
+
+enum EmployeeRange {
+  SOLO
+  SMALL
+  GROWING
+  MID
+  LARGE
+}
+
+enum Industry {
+  TRADING
+  MANUFACTURING
+  FOOD
+  IT_SERVICES
+  EXPORT_IMPORT
+  OTHER
+}
+
+enum TurnoverRange {
+  UNDER_20L
+  L20_1CR5
+  CR1_5_5
+  CR5_20
+  ABOVE_20CR
+}
+
+enum DeadlineFrequency {
+  MONTHLY
+  QUARTERLY
+  ANNUAL
+  HALF_YEARLY
+  EVENT_BASED
+}
+
+enum DeadlineCategory {
+  GST
+  TDS
+  PF
+  ESI
+  MCA
+  INCOME_TAX
+  PROFESSIONAL_TAX
+  INDUSTRY
+}
+
+enum DeadlineStatus {
+  PENDING
+  FILED
+  OVERDUE
+}
+
+enum SubscriptionPlan {
+  FREE
+  STARTER
+  GROWTH
+  CA_PARTNER
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  SUSPENDED
+  CANCELLED
+  TRIAL
+}
+
+// ─── MODELS ───────────────────────────────────────────────────────────────────
+
+model User {
+  id           String    @id @default(uuid())
+  mobile       String    @unique
+  mobileHash   String    @unique
+  role         UserRole  @default(MSME_OWNER)
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  business     Business?
+  caProfile    CAProfile?
+  otpSessions  OtpSession[]
+  refreshTokens RefreshToken[]
+
+  @@index([mobile])
+  @@map("users")
+}
+
+model OtpSession {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  otpHash   String
+  attempts  Int      @default(0)
+  expiresAt DateTime
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("otp_sessions")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("refresh_tokens")
+}
+
+model Business {
+  id              String        @id @default(uuid())
+  userId          String        @unique
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name            String
+  gstinEncrypted  String?
+  entityType      EntityType
+  gstStatus       GstStatus
+  employeeRange   EmployeeRange
+  states          String[]
+  industry        Industry
+  turnoverRange   TurnoverRange
+  isExporter      Boolean       @default(false)
+  hasPoshObligation Boolean    @default(false)
+  profileComplete Boolean       @default(false)
+  caId            String?
+  ca              CAProfile?    @relation(fields: [caId], references: [id])
+  subscription    Subscription?
+  deadlines       DeadlineInstance[]
+  notifications   NotificationLog[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([caId])
+  @@map("businesses")
+}
+
+model CAProfile {
+  id           String     @id @default(uuid())
+  userId       String     @unique
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firmName     String?
+  icaiNumber   String?
+  clients      Business[]
+  subscription Subscription?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@map("ca_profiles")
+}
+
+model DeadlineRule {
+  id              String            @id @default(uuid())
+  lawName         String
+  formNumber      String
+  title           String
+  description     String?
+  category        DeadlineCategory
+  frequency       DeadlineFrequency
+  dueDateFormula  String
+  applicableEntityTypes EntityType[]
+  applicableGstStatuses GstStatus[]
+  minEmployees    Int?
+  applicableIndustries  Industry[]
+  applicableStates      String[]
+  penaltyFormula  String
+  penaltyFixed    Float?
+  penaltyPerDay   Float?
+  penaltyRate     Float?
+  portalUrl       String
+  isActive        Boolean           @default(true)
+  instances       DeadlineInstance[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@map("deadline_rules")
+}
+
+model DeadlineInstance {
+  id          String         @id @default(uuid())
+  businessId  String
+  business    Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  ruleId      String
+  rule        DeadlineRule   @relation(fields: [ruleId], references: [id])
+  dueDate     DateTime
+  periodLabel String
+  status      DeadlineStatus @default(PENDING)
+  filedAt     DateTime?
+  filedByUserId String?
+  penaltyAccrued Float?
+  notified7d  Boolean        @default(false)
+  notified3d  Boolean        @default(false)
+  notified0d  Boolean        @default(false)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@unique([businessId, ruleId, dueDate])
+  @@index([businessId])
+  @@index([dueDate])
+  @@index([status])
+  @@map("deadline_instances")
+}
+
+model NotificationLog {
+  id          String   @id @default(uuid())
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  channel     String
+  templateId  String?
+  message     String
+  recipient   String
+  status      String
+  externalId  String?
+  sentAt      DateTime @default(now())
+
+  @@index([businessId])
+  @@index([sentAt])
+  @@map("notification_logs")
+}
+
+model Subscription {
+  id                   String             @id @default(uuid())
+  businessId           String?            @unique
+  business             Business?          @relation(fields: [businessId], references: [id])
+  caProfileId          String?            @unique
+  caProfile            CAProfile?         @relation(fields: [caProfileId], references: [id])
+  plan                 SubscriptionPlan   @default(FREE)
+  status               SubscriptionStatus @default(TRIAL)
+  razorpaySubId        String?
+  razorpayCustomerId   String?
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  trialEndsAt          DateTime?
+  cancelledAt          DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  @@map("subscriptions")
+}
+
+model ComplianceScore {
+  id            String   @id @default(uuid())
+  businessId    String   @unique
+  overallScore  Float    @default(100)
+  gstScore      Float    @default(100)
+  tdsScore      Float    @default(100)
+  pfEsiScore    Float    @default(100)
+  mcaScore      Float    @default(100)
+  industryScore Float    @default(100)
+  totalFiled    Int      @default(0)
+  totalMissed   Int      @default(0)
+  penaltySaved  Float    @default(0)
+  calculatedAt  DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("compliance_scores")
+}

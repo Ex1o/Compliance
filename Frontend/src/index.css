@@ -1,0 +1,206 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 30 33% 97%;
+    --foreground: 0 0% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+
+    --primary: 24 100% 44%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 145 60% 26%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 30 20% 94%;
+    --muted-foreground: 22 5% 40%;
+
+    --accent: 30 20% 94%;
+    --accent-foreground: 0 0% 10%;
+
+    --destructive: 4 70% 47%;
+    --destructive-foreground: 0 0% 100%;
+
+    --warning: 37 88% 44%;
+    --warning-foreground: 0 0% 100%;
+
+    --border: 28 16% 89%;
+    --input: 28 16% 89%;
+    --ring: 24 100% 44%;
+
+    --radius: 1rem;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 10%;
+    --sidebar-primary: 24 100% 44%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 30 20% 94%;
+    --sidebar-accent-foreground: 0 0% 10%;
+    --sidebar-border: 28 16% 89%;
+    --sidebar-ring: 24 100% 44%;
+
+    /* Custom tokens */
+    --saffron: 24 100% 44%;
+    --saffron-light: 22 100% 58%;
+    --saffron-dark: 24 100% 35%;
+    --forest: 145 60% 26%;
+    --forest-light: 145 60% 33%;
+    --forest-dark: 145 60% 19%;
+    --warm-50: 30 33% 97%;
+    --warm-100: 28 16% 93%;
+    --warm-200: 28 16% 89%;
+    --warm-500: 22 5% 40%;
+    --warm-900: 0 0% 10%;
+    --danger: 4 70% 47%;
+    --warning-color: 37 88% 44%;
+
+    /* Pill colors */
+    --pill-gst: 4 70% 47%;
+    --pill-tds: 217 91% 60%;
+    --pill-pf: 145 60% 26%;
+    --pill-mca: 271 50% 50%;
+    --pill-industry: 24 100% 44%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+}
+
+@layer components {
+  .skip-link {
+    @apply sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md;
+  }
+
+  .penalty-pulse {
+    animation: penalty-pulse 0.8s ease-in-out infinite alternate;
+  }
+
+  .card-hover {
+    @apply transition-all duration-200;
+  }
+  .card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px -8px hsl(var(--warm-500) / 0.2);
+  }
+
+  .status-overdue {
+    @apply bg-destructive/10 border-destructive/30;
+  }
+  .status-warning {
+    @apply bg-[hsl(var(--warning-color))]/10 border-[hsl(var(--warning-color))]/30;
+  }
+  .status-upcoming {
+    @apply bg-card border-border;
+  }
+  .status-done {
+    @apply bg-secondary/10 border-secondary/30;
+  }
+
+  .pill-gst {
+    @apply bg-[hsl(var(--pill-gst))]/15 text-[hsl(var(--pill-gst))];
+  }
+  .pill-tds {
+    @apply bg-[hsl(var(--pill-tds))]/15 text-[hsl(var(--pill-tds))];
+  }
+  .pill-pf {
+    @apply bg-[hsl(var(--pill-pf))]/15 text-[hsl(var(--pill-pf))];
+  }
+  .pill-mca {
+    @apply bg-[hsl(var(--pill-mca))]/15 text-[hsl(var(--pill-mca))];
+  }
+  .pill-industry {
+    @apply bg-[hsl(var(--pill-industry))]/15 text-[hsl(var(--pill-industry))];
+  }
+
+  .bottom-tab-bar {
+    @apply fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border flex items-center justify-around py-2 px-1 md:hidden;
+  }
+}
+
+@layer utilities {
+  .stagger-1 { animation-delay: 0ms; }
+  .stagger-2 { animation-delay: 80ms; }
+  .stagger-3 { animation-delay: 160ms; }
+  .stagger-4 { animation-delay: 240ms; }
+  .stagger-5 { animation-delay: 320ms; }
+  .stagger-6 { animation-delay: 400ms; }
+}
+
+@keyframes badge-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+@keyframes penalty-pulse {
+  from { opacity: 1; }
+  to { opacity: 0.7; }
+}
+
+@keyframes deadline-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes count-up {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scale-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.015); }
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-pulse-deadline {
+  animation: deadline-pulse 2s ease-in-out infinite;
+}
+
+.animate-pulse-penalty {
+  animation: penalty-pulse 2s ease-in-out infinite;
+}
+
+.animate-scale-pulse {
+  animation: scale-pulse 3s ease-in-out infinite;
+}
+
+.animate-pulse-badge {
+  animation: badge-pulse 2s ease-in-out infinite;
+}
+
+.animate-stagger-1 { animation: fade-in-up 400ms ease-out forwards; animation-delay: 0ms; opacity: 0; }
+.animate-stagger-2 { animation: fade-in-up 400ms ease-out forwards; animation-delay: 80ms; opacity: 0; }
+.animate-stagger-3 { animation: fade-in-up 400ms ease-out forwards; animation-delay: 160ms; opacity: 0; }
+.animate-stagger-4 { animation: fade-in-up 400ms ease-out forwards; animation-delay: 240ms; opacity: 0; }
+.animate-stagger-5 { animation: fade-in-up 400ms ease-out forwards; animation-delay: 350ms; opacity: 0; }
+.animate-stagger-6 { animation: fade-in-up 400ms ease-out forwards; animation-delay: 500ms; opacity: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
